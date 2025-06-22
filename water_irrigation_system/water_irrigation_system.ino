@@ -14,7 +14,7 @@ const int PINO_RELE = 8;
 const int VALOR_MAXIMO = 500;
 const int VALOR_MINIMO = 200;
 const int CONCENTRACAO_MINIMA = 30;
-const int IRRIGATION_TIME = 10000; // 10 segundos
+const unsigned long IRRIGATION_TIME = 10000UL; // 10 segundos
 
 // Variáveis de controle
 unsigned long previousDisplayUpdate = 0;
@@ -23,11 +23,11 @@ unsigned long lastIrrigationEnd = 0;  // Quando a última irrigação terminou
 unsigned long systemStart = 0;
 bool irrigating = false;
 bool systemReady = false;
-bool firstIrrigationCheck = true;  // Nova variável para controlar primeira verificação
+bool firstIrrigationCheck = true;
 int currentScreen = 0;
 
 // Constantes de tempo
-const int COOLDOWN_TIME = 300000;  // 5 minutos (300000ms) de espera após irrigação
+const unsigned long COOLDOWN_TIME = 300000UL;  // 5 minutos (300000ms) de espera após irrigação
 
 // Caracteres customizados
 byte dropChar[8] = {
@@ -79,7 +79,7 @@ void setup() {
   
   pinMode(PINO_SENSOR, INPUT);
   pinMode(PINO_RELE, OUTPUT);
-  digitalWrite(PINO_RELE, HIGH);  // FIXO 1: Relé HIGH quando desligado
+  digitalWrite(PINO_RELE, HIGH);
   
   lcd.begin(16, 2);
   
@@ -127,7 +127,7 @@ void initializeSystem() {
   lcd.setCursor(0, 0);
   lcd.print("Testando DHT11");
   
-  // Teste do DHT11 usando biblioteca Adafruit
+  // Teste do DHT11
   float testTemp = dht.readTemperature();
   float testHum = dht.readHumidity();
   
@@ -156,7 +156,7 @@ void updateDisplay() {
   soilMoisture = map(soilMoisture, VALOR_MINIMO, VALOR_MAXIMO, 100, 0);
   soilMoisture = constrain(soilMoisture, 0, 100);
   
-  // Ler temperatura e umidade usando biblioteca Adafruit
+  // Ler temperatura e umidade
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
   
@@ -171,7 +171,7 @@ void updateDisplay() {
   // Alternar entre telas a cada 10 segundos
   unsigned long currentTime = millis();
   if (currentTime - previousDisplayUpdate >= 10000) {
-    currentScreen = (currentScreen + 1) % 2; // Apenas 2 telas agora
+    currentScreen = (currentScreen + 1) % 2;
     previousDisplayUpdate = currentTime;
     lcd.clear();
   }
@@ -227,28 +227,42 @@ void displaySoilScreen(int soilMoisture) {
   // Linha 2: Status do solo e irrigação
   lcd.setCursor(0, 1);
   
-  // Verificar se está em cooldown
-  bool inCooldown = (millis() - lastIrrigationEnd) < COOLDOWN_TIME && lastIrrigationEnd > 0;
+  bool inCooldown = false;
+  if (lastIrrigationEnd > 0) {
+    unsigned long timeSinceLastIrrigation = millis() - lastIrrigationEnd;
+    inCooldown = timeSinceLastIrrigation < COOLDOWN_TIME;
+  }
   
   if (irrigating) {
     lcd.print("IRRIGANDO");
     lcd.write((uint8_t)0);
   } else if (inCooldown) {
-    // FIXO 2: Mostrar tempo restante corretamente
-    unsigned long remainingTime = COOLDOWN_TIME - (millis() - lastIrrigationEnd);
+    unsigned long timeSinceLastIrrigation = millis() - lastIrrigationEnd;
     
-    if (remainingTime > 60000) {
-      // Mostrar em minutos se for mais de 1 minuto
-      unsigned long remainingMin = remainingTime / 60000;
-      lcd.print("Aguard:");
-      lcd.print(remainingMin);
-      lcd.print("min");
+    // Verificar se ainda está dentro do período de cooldown
+    if (timeSinceLastIrrigation < COOLDOWN_TIME) {
+      unsigned long remainingTime = COOLDOWN_TIME - timeSinceLastIrrigation;
+      
+      if (remainingTime > 60000) {
+        // Mostrar em minutos se for mais de 1 minuto
+        unsigned long remainingMin = remainingTime / 60000;
+        lcd.print("Aguard:");
+        lcd.print(remainingMin);
+        lcd.print("min");
+      } else {
+        // Mostrar em segundos se for menos de 1 minuto
+        unsigned long remainingSec = remainingTime / 1000;
+        lcd.print("Aguard:");
+        lcd.print(remainingSec);
+        lcd.print("s");
+      }
     } else {
-      // Mostrar em segundos se for menos de 1 minuto
-      unsigned long remainingSec = remainingTime / 1000;
-      lcd.print("Aguard:");
-      lcd.print(remainingSec);
-      lcd.print("s");
+      // Tempo de cooldown já passou
+      if (soilMoisture < CONCENTRACAO_MINIMA) {
+        lcd.print("SECO - PRONTO");
+      } else {
+        lcd.print("NORMAL");
+      }
     }
   } else if (soilMoisture < CONCENTRACAO_MINIMA) {
     lcd.print("SECO - PRONTO");
@@ -264,10 +278,10 @@ void controlIrrigation() {
   soilMoisture = map(soilMoisture, VALOR_MINIMO, VALOR_MAXIMO, 100, 0);
   soilMoisture = constrain(soilMoisture, 0, 100);
   
-  // FIXO 3: Para primeira verificação, não considerar cooldown
   bool inCooldown = false;
-  if (!firstIrrigationCheck) {
-    inCooldown = (millis() - lastIrrigationEnd) < COOLDOWN_TIME && lastIrrigationEnd > 0;
+  if (!firstIrrigationCheck && lastIrrigationEnd > 0) {
+    unsigned long timeSinceLastIrrigation = millis() - lastIrrigationEnd;
+    inCooldown = timeSinceLastIrrigation < COOLDOWN_TIME;
   }
   
   // Debug do controle de irrigação
@@ -279,15 +293,24 @@ void controlIrrigation() {
     Serial.print("% | Irrigando: ");
     Serial.print(irrigating ? "SIM" : "NAO");
     
-    if (inCooldown) {
-      unsigned long remainingCooldown = (COOLDOWN_TIME - (millis() - lastIrrigationEnd)) / 1000;
-      Serial.print(" | Cooldown: ");
-      Serial.print(remainingCooldown);
+    if (lastIrrigationEnd > 0) {
+      unsigned long timeSinceLastIrrigation = millis() - lastIrrigationEnd;
+      Serial.print(" | Tempo desde ultima: ");
+      Serial.print(timeSinceLastIrrigation / 1000);
       Serial.print("s");
+      
+      if (inCooldown) {
+        unsigned long remainingCooldown = (COOLDOWN_TIME - timeSinceLastIrrigation) / 1000;
+        Serial.print(" | Cooldown restante: ");
+        Serial.print(remainingCooldown);
+        Serial.print("s");
+      } else {
+        Serial.print(" | Cooldown terminado");
+      }
     }
     
     if (firstIrrigationCheck) {
-      Serial.print(" | Primeira verificacao");
+      Serial.print(" | Primeira verificacao - sem cooldown");
     }
     
     Serial.println();
@@ -295,15 +318,17 @@ void controlIrrigation() {
   
   // Iniciar irrigação se necessário
   if (!irrigating && soilMoisture < CONCENTRACAO_MINIMA && !inCooldown) {
-    digitalWrite(PINO_RELE, LOW);  // FIXO 1: LOW para ligar o relé
+    digitalWrite(PINO_RELE, LOW);  // LOW para ligar o relé
     irrigating = true;
     irrigationStart = millis();
-    firstIrrigationCheck = false;  // FIXO 3: Marcar que primeira verificação foi feita
+    firstIrrigationCheck = false;  // Marcar que primeira verificação foi feita
     
     Serial.println(">>> INICIANDO IRRIGACAO <<<");
     Serial.print("Umidade do solo: ");
     Serial.print(soilMoisture);
     Serial.println("%");
+    Serial.print("Tempo atual (millis): ");
+    Serial.println(millis());
     
     // Mostrar notificação
     lcd.clear();
@@ -319,7 +344,7 @@ void controlIrrigation() {
   
   // Parar irrigação após o tempo definido
   if (irrigating && millis() - irrigationStart >= IRRIGATION_TIME) {
-    digitalWrite(PINO_RELE, HIGH);  // FIXO 1: HIGH para desligar o relé
+    digitalWrite(PINO_RELE, HIGH);  // HIGH para desligar o relé
     irrigating = false;
     lastIrrigationEnd = millis(); // Marcar quando a irrigação terminou
     
@@ -327,6 +352,8 @@ void controlIrrigation() {
     Serial.print("Iniciando cooldown de ");
     Serial.print(COOLDOWN_TIME / 60000);
     Serial.println(" minutos");
+    Serial.print("Timestamp fim irrigacao: ");
+    Serial.println(lastIrrigationEnd);
     
     // Mostrar notificação
     lcd.clear();
