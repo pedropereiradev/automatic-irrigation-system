@@ -1,18 +1,5 @@
 # Sistema de Irrigação Automática com Arduino
 
-## 📋 Índice
-- [Descrição do Projeto](#descrição-do-projeto)
-- [Funcionalidades](#funcionalidades)
-- [Componentes Necessários](#componentes-necessários)
-- [Esquema de Ligação](#esquema-de-ligação)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Como Usar](#como-usar)
-- [Calibração](#calibração)
-- [Solução de Problemas](#solução-de-problemas)
-- [Manutenção](#manutenção)
-- [Código Fonte](#código-fonte)
-
 ## 🌱 Descrição do Projeto
 
 Este sistema de irrigação automática foi desenvolvido para monitorar e controlar automaticamente a irrigação de plantas com base na umidade do solo. O sistema utiliza sensores para medir a umidade do solo e as condições ambientais (temperatura e umidade do ar), exibindo as informações em um display LCD e acionando automaticamente uma álvula solenóide para liberar o fluxo de água quando necessário.
