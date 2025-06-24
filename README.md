@@ -2,7 +2,7 @@
 
 ## 🌱 Descrição do Projeto
 
-Este sistema de irrigação automática foi desenvolvido para monitorar e controlar automaticamente a irrigação de plantas com base na umidade do solo. O sistema utiliza sensores para medir a umidade do solo e as condições ambientais (temperatura e umidade do ar), exibindo as informações em um display LCD e acionando automaticamente uma álvula solenóide para liberar o fluxo de água quando necessário.
+Este sistema de irrigação automática foi desenvolvido para monitorar e controlar automaticamente a irrigação de plantas com base na umidade do solo. O sistema utiliza sensores para medir a umidade do solo e as condições ambientais (temperatura e umidade do ar), exibindo as informações em um display LCD e acionando automaticamente uma válvula solenóide para liberar o fluxo de água quando necessário.
 
 ### Características Principais:
 - **Monitoramento contínuo** da umidade do solo
@@ -124,7 +124,6 @@ NO       → Válvula positiva
 // Sketch → Include Library → Manage Libraries
 // Buscar e instalar:
 // - "DHT sensor library" by Adafruit
-// - "Adafruit Unified Sensor"
 ```
 
 ### 2. Montagem do Hardware
