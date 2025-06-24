@@ -11,8 +11,8 @@ DHT dht(DHTPIN, DHTTYPE);
 // Pinos e constantes
 const int PINO_SENSOR = A0;
 const int PINO_RELE = 8;
-const int VALOR_MAXIMO = 500;
-const int VALOR_MINIMO = 200;
+const int VALOR_MAXIMO = 540;
+const int VALOR_MINIMO = 260;
 const int CONCENTRACAO_MINIMA = 30;
 const unsigned long IRRIGATION_TIME = 10000UL; // 10 segundos
 
