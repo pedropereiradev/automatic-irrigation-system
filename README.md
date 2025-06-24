@@ -242,6 +242,14 @@ VALOR_MAXIMO      // Calibração sensor seco
 VALOR_MINIMO      // Calibração sensor úmido
 ```
 
+## Circuito prototipado
+
+![Imagem 1](./assets/IMG_5368.jpg)
+
+![Imagem 2](./assets/IMG_5369.jpg)
+
+[Video Demo](https://youtu.be/boT2rhKMm9Y)
+
 ## 📝 Notas Importantes
 
 ### Segurança
